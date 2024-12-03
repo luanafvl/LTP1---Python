@@ -1,5 +1,7 @@
 import sqlite3
 
+# Falta lidar com o texto do departamento ao criar funcionario
+
 # Conectando com o Banco de Dados
 con = sqlite3.connect("tutorial.db")
 cur = con.cursor()
