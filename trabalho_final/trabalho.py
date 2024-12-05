@@ -1,6 +1,5 @@
 import sqlite3
 
-# Falta lidar com o texto do departamento ao criar funcionario
 
 # Conectando com o Banco de Dados
 con = sqlite3.connect("tutorial.db")
@@ -35,23 +34,37 @@ class Funcionario:
         nome = input("Nome: ")
         cargo = input("Cargo: ")
         salario = float(input("Salario: "))
-        departamento = input("Departamento: ")
+
+        print("Departamentos disponíveis:")
+        for departamentos in cur.execute("SELECT cd_departamento, departamento FROM tb_departamento"):
+            print( f"{departamentos[0]} - {departamentos[1]}", end=";\n")
+
+        departamento = input("Código do departamento: ")
 
         # Verificando se existe algum departamento para o funcionario ser alocado
         isInDepartamentos = False
-        for departamentos in cur.execute("SELECT departamento FROM tb_departamento"):
-            if departamento == departamentos[0]:
+        for departamentos in cur.execute("SELECT cd_departamento FROM tb_departamento"):
+            if int(departamento) == departamentos[0]:
                 isInDepartamentos = True
 
         # Apenas ocorre se já houver um departamento
         if isInDepartamentos:
-            cur.execute("INSERT INTO tb_funcionario (funcionario, cargo, salario, departamento) VALUES(?, ?, ?, ?)",
+            cur.execute("INSERT INTO tb_funcionario (funcionario, cargo, salario, cd_departamento) VALUES(?, ?, ?, ?)",
                         (nome, cargo, salario, departamento))
             print(f"Funcionário(a) {nome} adicionado(a).")
         else:
             print("Departamento inválido. Funcionário não adicionado.")
 
     def editarFuncionario(self):
+
+        # Verifica se existe algum funcionário
+        cur.execute("SELECT funcionario FROM tb_funcionario")
+        funcionarios = cur.fetchall()
+        if not funcionarios:
+            print("Não há funcionários na empresa.\n")
+            return
+
+        # Se existir, o código funciona normalmente
         print("Editando funcionário...")
         for nomes in cur.execute("SELECT funcionario FROM tb_funcionario"):
             print(nomes)
@@ -68,15 +81,21 @@ class Funcionario:
             nome = input("Nome: ")
             cargo = input("Cargo: ")
             salario = float(input("Salario: "))
-            departamento = input("Departamento: ")
 
-            isInDepartamento = False
-            for i in cur.execute("SELECT departamento FROM tb_departamento"):
-                if departamento == i[0]:
-                    isInDepartamento = True
+            print("Departamentos disponíveis:")
+            for departamentos in cur.execute("SELECT cd_departamento, departamento FROM tb_departamento"):
+                print(f"{departamentos[0]} - {departamentos[1]}", end=";\n")
 
-            if isInDepartamento:
-                cur.execute("UPDATE tb_funcionario SET funcionario = ?, cargo = ?, salario = ?, departamento = ? WHERE funcionario = ?",
+            departamento = input("Código do departamento: ")
+
+            # Verificando se existe algum departamento para o funcionario ser alocado
+            isInDepartamentos = False
+            for departamentos in cur.execute("SELECT cd_departamento FROM tb_departamento"):
+                if int(departamento) == departamentos[0]:
+                    isInDepartamentos = True
+
+            if isInDepartamentos:
+                cur.execute("UPDATE tb_funcionario SET funcionario = ?, cargo = ?, salario = ?, cd_departamento = ? WHERE funcionario = ?",
                             (nome, cargo, salario, departamento, comparaNome))
                 print(f"Funcionário(a) {nome} alterado(a).")
             else:
@@ -85,6 +104,12 @@ class Funcionario:
             print("Funcionário inválido. Dados não alterados.")
 
     def removerFuncionario(self):
+        cur.execute("SELECT funcionario FROM tb_funcionario")
+        funcionarios = cur.fetchall()
+        if not funcionarios:
+            print("Não há funcionários na empresa.\n")
+            return
+
         print("Removendo Funcionário...")
         for nomes in cur.execute("SELECT funcionario FROM tb_funcionario"):
             print(nomes)
@@ -101,6 +126,22 @@ class Funcionario:
         else:
             print("Funcionário inválido.")
 
+
+    def mostrarFuncionarios(self):
+        cur.execute("SELECT funcionario FROM tb_funcionario")
+        funcionarios = cur.fetchall()
+        if not funcionarios:
+            print("Não há funcionários na empresa.\n")
+            return
+
+        print("Funcionario - Departamento")
+        cur.execute("SELECT f.funcionario, d.departamento FROM tb_funcionario f JOIN tb_departamento d ON f.cd_departamento = d.cd_departamento")
+        for funcionario in cur.fetchall():
+            print(f"{funcionario[0]} - {funcionario[1]}")
+
+
+
+
 class Departamento:
     def addDepartamento(self):
         print("Adicionando departamento...")
@@ -116,9 +157,15 @@ class Departamento:
             print("Impossível adicionar departamento já existente.")
         else:
             cur.execute("INSERT INTO tb_departamento (departamento) VALUES (?)", (nome,))
-            print(f"Departamento {nome} adicionado(a).")
+            print(f"Departamento {nome} adicionado.")
 
     def editarDepartamento(self):
+        cur.execute("SELECT departamento FROM tb_departamento")
+        departamentos = cur.fetchall()
+        if not departamentos:
+            print("Não há departamentos na empresa.\n")
+            return
+
         print("Editando departamento...")
         for nomes in cur.execute("SELECT departamento FROM tb_departamento"):
             print(nomes)
@@ -138,6 +185,12 @@ class Departamento:
             print("Departamento inválido. Dados não alterados.")
 
     def removerDepartamento(self):
+        cur.execute("SELECT departamento FROM tb_departamento")
+        departamentos = cur.fetchall()
+        if not departamentos:
+            print("Não há departamentos na empresa.\n")
+            return
+
         print("Removendo departamento...")
         for departamentos in cur.execute("SELECT departamento FROM tb_departamento"):
             print(departamentos)
@@ -150,9 +203,20 @@ class Departamento:
 
         if isInNomes:
             cur.execute("DELETE FROM tb_departamento WHERE departamento = ?", (comparaNome,))
-            print(f"Departamento {comparaNome} removido(a).")
+            print(f"Departamento {comparaNome} removido.")
         else:
             print("Departamento inválido.")
+
+
+    def mostrarDepartamentos(self):
+        cur.execute("SELECT departamento FROM tb_departamento")
+        departamentos = cur.fetchall()
+        if not departamentos:
+            print("Não há departamentos na empresa.\n")
+            return
+        for departamento in cur.execute("SELECT departamento FROM tb_departamento"):
+            print(departamento)
+
 
 # Inicializando
 funcionario = Funcionario()
@@ -166,20 +230,22 @@ while gerenciar != 3:
     if gerenciar == 1:
         print("Gerenciando funcionários...")
         opt = 0
-        while opt != 4:
-            opt = int(input("(1) - Adicionar Funcionário\n(2) - Editar Funcionário\n(3) - Remover Funcionário\n(4) - Voltar\n"))
+        while opt != 5:
+            opt = int(input("(1) - Adicionar Funcionário\n(2) - Editar Funcionário\n(3) - Remover Funcionário\n(4) - Mostrar funcionários\n(5) - Voltar\n"))
             if opt == 1:
                 funcionario.addFuncionario()
             elif opt == 2:
                 funcionario.editarFuncionario()
             elif opt == 3:
                 funcionario.removerFuncionario()
+            elif opt == 4:
+                funcionario.mostrarFuncionarios()
 
     elif gerenciar == 2:
         print("Gerenciando departamentos...")
         opt = 0
         while opt != 5:
-            opt = int(input("(1) - Adicionar Departamento\n(2) - Editar Departamento\n(3) - Remover Departamento\n(4) - Mostrar Departamentos\n(5) - Sair\n"))
+            opt = int(input("(1) - Adicionar Departamento\n(2) - Editar Departamento\n(3) - Remover Departamento\n(4) - Mostrar Departamentos\n(5) - Voltar\n"))
             if opt == 1:
                 departamento.addDepartamento()
             elif opt == 2:
@@ -187,9 +253,15 @@ while gerenciar != 3:
             elif opt == 3:
                 departamento.removerDepartamento()
             elif opt == 4:
-                for i in cur.execute("SELECT departamento FROM tb_departamento"):
-                    print(i)
+                departamento.mostrarDepartamentos()
     elif gerenciar == 3:
         print("Até logo!")
     else:
         print("Opção inválida.")
+
+'''
+Usar apenas se quiser salvar as alterações no BD
+con.commit()
+'''
+
+con.close()
