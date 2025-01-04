@@ -1,7 +1,5 @@
-# LTP1---Python
+# LTP1 (College/Uni)
 
-pt-br
-Exercícios da faculdade com Python (Linguagem e técnicas de programação 1)
+Exercícios com Python (Linguagem e técnicas de programação 1)
 
-en
-College exercises with Python (Programming language and techniques 1)
+Grade wise college exercises with Python (Programming language and techniques 1)
